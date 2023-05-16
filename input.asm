@@ -1,6 +1,9 @@
 global read_integer, verify_for_op_symbol
 
 read_integer:
+    MOV     DX,0000h
+    PUSH    DX
+read_integer1:
     ; Reading the char
     MOV     ah,1h
     INT     21h
@@ -13,7 +16,7 @@ read_integer:
     CMP     AL,'+'
     JE      read_integer_return
     CMP     AL,'-'
-    JE      read_integer_return
+    JE      if_minus_signal
     CMP     AL,'*'
     JE      read_integer_return
     CMP     AL,'/'
@@ -29,10 +32,27 @@ read_integer:
     MOV     [di],ax
 
     ADD     [di],cl
-    JMP     read_integer
-
+    JMP     read_integer1
 read_integer_return:
+    POP     DX
+    ADD     [DI],DX
+    CMP     DH,00h
+    JE      skip_pop
+    
+    POP     CX
+    skip_pop:
     RET
+
+if_negative_num:
+    MOV     DX,8000h
+    PUSH    DX
+    JMP     read_integer1
+
+if_minus_signal:
+    MOV     DX,[DI]
+    CMP     DX,0
+    JE      if_negative_num
+    JNE     read_integer_return
 
 verify_for_op_symbol:
     ; AL must contain the operator to be evaluated

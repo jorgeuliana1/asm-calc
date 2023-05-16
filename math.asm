@@ -23,7 +23,7 @@ _mul:
     ;   AX: value1
     ;   BX: value2
     ;   DI: Must point to result word
-    MUL     BX
+    IMUL    BX
     MOV     [DI],AX
     RET
 
@@ -32,6 +32,7 @@ _div:
     ;   AX: value1
     ;   BX: value2
     ;   DI: Must point to result word
-    DIV     BL
-    MOV     [DI],AL
+    CWD
+    IDIV    BX
+    MOV     [DI],AX
     RET

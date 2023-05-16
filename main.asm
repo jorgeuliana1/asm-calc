@@ -1,4 +1,4 @@
-extern print_integer, read_integer, read_char, _sum, _sub, _mul, _div, verify_for_op_symbol
+extern print_integer, read_integer, _sum, _sub, _mul, _div, verify_for_op_symbol
 
 segment code
 ..start:
@@ -11,8 +11,15 @@ segment code
 
     ; Getting value1 from keyboard
     MOV     DI,value1
-    MOV     DX,op_symbol
     CALL    read_integer
+
+    ; Defining if value1 is negative and setting the 2-complement    
+    MOV     BX,[DI]
+    AND     BH,80h
+    CMP     BH,80h
+    JE      if_v1_is_negative
+
+    if_v1_doesnt_need_treatment:
 
     ; Getting op_symbol from keyboard
     MOV     DI,op_symbol
@@ -20,8 +27,15 @@ segment code
 
     ; Getting value2 from keyboard
     MOV     DI,value2
-    MOV     DX,op_symbol
     CALL    read_integer
+
+    ; ; Defining if value2 is negative and setting the 2-complement
+    MOV     BX,[DI]
+    AND     BH,80h
+    CMP     BH,80h
+    JE      if_v2_is_negative
+
+    if_v2_doesnt_need_treatment:
     
     ; Setting everything up for the operation
     MOV     AX,[value1]
@@ -43,11 +57,47 @@ finish_routine:
     ; Printing the result
     MOV     DX,[op_result]
     MOV     CX,num_buffer
-    CALL    print_integer
+    CALL    print_2_complement
 
     ; Finishing the routine
     MOV     ah,4ch
 	INT     21h
+
+if_v1_is_negative:
+    ; Converting to 2-complement
+    MOV     DI,value1
+    MOV     BX,[DI]
+    AND     BH,0111b ; Removing most significant bit
+    NEG     BX
+    MOV     [DI],BX
+    JMP     if_v1_doesnt_need_treatment
+
+if_v2_is_negative:
+    ; Converting to 2-complement
+    MOV     DI,value2
+    MOV     BX,[DI]
+    AND     BH,0111b ; Removing most significant bit
+    NEG     BX
+    MOV     [DI],BX
+    JMP     if_v2_doesnt_need_treatment
+
+print_2_complement:
+    MOV     AH,DH
+    AND     AH,07h
+    CMP     AH,DH
+    JE      print_normally
+    NEG     DX
+
+    PUSH    DX
+    ; Printing '-'
+    MOV     DL,2Dh
+    MOV     AH,02h
+    INT     21h
+    ; End of printing
+    POP     DX
+    print_normally:
+    CALL print_integer
+    RET
 
 call_sum:
     CALL    _sum
