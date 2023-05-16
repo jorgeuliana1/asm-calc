@@ -32,6 +32,16 @@ _div:
     ;   AX: value1
     ;   BX: value2
     ;   DI: Must point to result word
+
+    ; Verifying for division-by-zero
+    CMP     BX,0h
+    JNE     perform_division
+
+    ; Closing the program in case of inapropriate division
+    MOV     ah,4ch
+	INT     21h
+
+    perform_division: ; Doing the operation normally
     CWD
     IDIV    BX
     MOV     [DI],AX

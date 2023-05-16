@@ -52,6 +52,7 @@ segment code
     JE      call_mul
     CMP     CX,'/'
     JE      call_div
+    JNE     quit_program
 
 finish_routine:
     ; Printing the result
@@ -59,6 +60,7 @@ finish_routine:
     MOV     CX,num_buffer
     CALL    print_2_complement
 
+quit_program:
     ; Finishing the routine
     MOV     ah,4ch
 	INT     21h
