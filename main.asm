@@ -124,7 +124,6 @@ segment data
     value2         dw   0
     op_symbol      dw   0
     op_result      dw   0
-    num_value      dw   0
     num_buffer:    resb 5
                    db CR,LF,'$'
                 

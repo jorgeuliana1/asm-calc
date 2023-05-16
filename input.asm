@@ -21,15 +21,20 @@ read_integer1:
     JE      read_integer_return
     CMP     AL,'/'
     JE      read_integer_return
+    CMP     AL,'0'
+    JE      if_is_zero
+    keep_going:
 
     ; ASCII to INT conversion
     SUB     al,30h
     MOV     cl,al
-    
+
+    PUSH    AX
     MOV     ax,[di]
     MOV     bx,10
     MUL     bx
     MOV     [di],ax
+    POP     AX
 
     ADD     [di],cl
     JMP     read_integer1
@@ -53,6 +58,15 @@ if_minus_signal:
     CMP     DX,0
     JE      if_negative_num
     JNE     read_integer_return
+
+if_is_zero:
+    MOV     DX,[DI]
+    CMP     DX,0
+    JNE     keep_going
+    ADD     DX,8000h
+    MOV     [DI],DX
+    JMP     read_integer1
+
 
 verify_for_op_symbol:
     ; AL must contain the operator to be evaluated
