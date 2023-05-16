@@ -63,7 +63,7 @@ if_is_zero:
     MOV     DX,[DI]
     CMP     DX,0
     JNE     keep_going
-    ADD     DX,8000h
+    ADD     DX,8000h ; Might be insignificant for this case
     MOV     [DI],DX
     JMP     read_integer1
 
