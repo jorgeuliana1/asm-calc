@@ -1,4 +1,5 @@
-extern print_integer, read_integer, _sum, _sub, _mul, _div, verify_for_op_symbol
+global color
+extern print_integer, read_integer, _sum, _sub, _mul, _div, verify_for_op_symbol, display_gui
 
 segment code
 ..start:
@@ -8,6 +9,19 @@ segment code
 	MOV     ax,stack 
 	MOV     ss,ax
 	MOV     sp,stacktop
+
+    ; Back up the current graphical mode
+    MOV  	AH,0Fh
+    INT  	10h
+    MOV  	[last_graphical_mode],AL   
+
+    ; 640x480 16 colors mode
+    MOV     AL,12h
+    MOV     AH,0
+    INT     10h
+
+    ; Displaying the Graphical User Interface
+    CALL    display_gui
 
     ; Getting value1 from keyboard
     MOV     DI,value1
@@ -29,7 +43,7 @@ segment code
     MOV     DI,value2
     CALL    read_integer
 
-    ; ; Defining if value2 is negative and setting the 2-complement
+    ; Defining if value2 is negative and setting the 2-complement
     MOV     BX,[DI]
     AND     BH,80h
     CMP     BH,80h
@@ -60,9 +74,15 @@ finish_routine:
     MOV     CX,num_buffer
     CALL    print_2_complement
 
+finish_graphical_mode:
+    ; Finishing the graphical mode
+    MOV     AH,0
+    MOV     AL,[last_graphical_mode]
+    INT     10h
+
 quit_program:
     ; Finishing the routine
-    MOV     ah,4ch
+    MOV     AX,4c00h
 	INT     21h
 
 if_v1_is_negative:
@@ -118,14 +138,16 @@ call_div:
     JMP     finish_routine
 
 segment data
-    CR             equ  0dh 
-    LF             equ  0ah
-    value1         dw   0
-    value2         dw   0
-    op_symbol      dw   0
-    op_result      dw   0
-    num_buffer:    resb 5
-                   db CR,LF,'$'
+    CR                      equ  0dh 
+    LF                      equ  0ah
+    value1                  dw   0
+    value2                  dw   0
+    op_symbol               dw   0
+    op_result               dw   0
+    last_graphical_mode     db   0
+    color                   db   15 ; Intense white
+    num_buffer:             resb 5
+                            db CR,LF,'$'
                 
 
 segment stack stack 
