@@ -1,5 +1,5 @@
 global color
-extern print_integer, read_integer, _sum, _sub, _mul, _div, verify_for_op_symbol, display_gui
+extern print_integer, read_integer, _sum, _sub, _mul, _div, verify_for_op_symbol, display_gui, mouse_input
 
 segment code
 ..start:
@@ -20,8 +20,19 @@ segment code
     MOV     AH,0
     INT     10h
 
+    ; Initializing the mouse
+    MOV     AX,00h
+    INT     33h
+
+    ; Show the mouse cursor
+    MOV     AX,01h
+    INT     33h
+
     ; Displaying the Graphical User Interface
     CALL    display_gui
+
+    ; Waiting for mouse input (DEBUG)
+    CALL    mouse_input
 
     ; Getting value1 from keyboard
     MOV     DI,value1
