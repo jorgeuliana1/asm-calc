@@ -1,4 +1,5 @@
 global read_integer, verify_for_op_symbol, mouse_input
+extern keychar, keyflag
 
 read_integer:
     MOV     DX,0000h
@@ -94,6 +95,10 @@ mouse_input:
     PUSH    CX
     PUSH    DX
 
+key_status:
+    CMP     byte[keyflag],0
+    JNE     treat_keyboard_input
+
 mouse_status:
     ; Getting mouse status
     MOV     AX,03h
@@ -107,7 +112,7 @@ mouse_status:
     ; Testing for left button down
     TEST    BL,1
     JNZ     left_down
-    JMP     mouse_status
+    JMP     key_status
 
 left_down:
     ; Getting new mouse status
@@ -134,6 +139,11 @@ finish_mouse_call:
     POPF
 
     RET
+
+treat_keyboard_input:
+    MOV     AL,byte[keychar]
+    MOV     byte[keyflag],0
+    JMP     finish_mouse_call
 
 ; The following set of labels define the region to be clicked
 ; and the corresponding input

@@ -1,4 +1,4 @@
-global color
+global color, keychar, keyflag
 extern print_integer, read_integer, _sum, _sub, _mul, _div, verify_for_op_symbol, display_gui, mouse_input
 
 segment code
@@ -13,12 +13,15 @@ segment code
     ; Back up the current graphical mode
     MOV  	AH,0Fh
     INT  	10h
-    MOV  	[last_graphical_mode],AL   
+    MOV  	[last_graphical_mode],AL
 
     ; 640x480 16 colors mode
     MOV     AL,12h
     MOV     AH,0
     INT     10h
+
+    ; Defining the keyboard interruption
+    CALL replace_int9
 
     ; Initializing the mouse
     MOV     AX,00h
@@ -92,6 +95,8 @@ finish_graphical_mode:
     INT     10h
 
 quit_program:
+    CALL retrieve_dos_int9
+
     ; Finishing the routine
     MOV     AX,4c00h
 	INT     21h
@@ -148,6 +153,170 @@ call_div:
     CALL    _div
     JMP     finish_routine
 
+replace_int9:
+    CLI
+    XOR     AX,AX
+    MOV     ES,AX
+    MOV     AX,[ES:int9*4]
+    MOV     [offset_dos],AX
+    MOV     AX,[ES:int9*4+2]
+    MOV     [cs_dos],AX
+    MOV     WORD[ES:int9*4+2],CS
+    MOV     AX,seg key_int
+    rol     AX,4
+    MOV     DX,CS
+    rol     DX,4
+    SUB     AX,DX
+    ADD     AX,key_int
+    MOV     WORD[ES:int9*4],AX
+    STI
+    RET
+
+retrieve_dos_int9:
+	CLI
+	XOR     AX,AX
+	MOV     ES,AX
+	MOV     AX,[offset_dos]
+	MOV     [ES:int9*4],AX 
+	MOV     AX,[cs_dos]
+	MOV     [ES:int9*4+2],AX
+	STI
+    RET
+
+key_int:
+    ; Saving context
+	PUSH    AX
+    PUSH    BX
+    PUSH    DS
+
+	MOV     AX,seg cs_dos
+	MOV     DS,AX
+
+    ; Defining that the keyflag is being read
+    MOV     byte[keyflag],1
+
+    ; Getting key make/break code
+	IN      AL,kb_data
+    CMP     AL,0E0h ; Ignoring 0E0h
+    JNE     key_is_captured
+	IN      AL,kb_data ; If 0E0h was captured, capture the next input from buffer
+
+key_is_captured:
+    ; Updating the value of p_i
+	INC     word [p_i]
+	AND     word [p_i],7
+	MOV     BX,[p_i]
+
+    ; Saving the captured key value
+	MOV     [BX+key],AL
+	IN      AL,kb_ctl
+	OR      AL,80h
+	OUT     kb_ctl,AL
+	AND     AL,7fh
+	OUT     kb_ctl,AL
+
+    ; Defining flag
+
+    defining_keychar:
+    check_0_keypress:
+    CMP     byte[BX+key],0Bh
+    JNE     check_1_keypress
+    MOV     byte[keychar],'0'
+    JMP     finish_key_checking
+
+    check_1_keypress:
+    CMP     byte[BX+key],02h
+    JNE     check_2_keypress
+    MOV     byte[keychar],'1'
+    JMP     finish_key_checking
+
+    check_2_keypress:
+    CMP     byte[BX+key],03h
+    JNE     check_3_keypress
+    MOV     byte[keychar],'2'
+    JMP     finish_key_checking
+
+    check_3_keypress:
+    CMP     byte[BX+key],04h
+    JNE     check_4_keypress
+    MOV     byte[keychar],'3'
+    JMP     finish_key_checking
+
+    check_4_keypress:
+    CMP     byte[BX+key],05h
+    JNE     check_5_keypress
+    MOV     byte[keychar],'4'
+    JMP     finish_key_checking
+
+    check_5_keypress:
+    CMP     byte[BX+key],06h
+    JNE     check_6_keypress
+    MOV     byte[keychar],'5'
+    JMP     finish_key_checking
+
+    check_6_keypress:
+    CMP     byte[BX+key],07h
+    JNE     check_7_keypress
+    MOV     byte[keychar],'6'
+    JMP     finish_key_checking
+
+    check_7_keypress:
+    CMP     byte[BX+key],08h
+    JNE     check_8_keypress
+    MOV     byte[keychar],'7'
+    JMP     finish_key_checking
+
+    check_8_keypress:
+    CMP     byte[BX+key],09h
+    JNE     check_9_keypress
+    MOV     byte[keychar],'8'
+    JMP     finish_key_checking
+
+    check_9_keypress:
+    CMP     byte[BX+key],0Ah
+    JNE     check_plus_keypress
+    MOV     byte[keychar],'9'
+    JMP     finish_key_checking
+
+    check_plus_keypress:
+    CMP     byte[BX+key],0Dh
+    JNE     check_minus_keypress
+    MOV     byte[keychar],'+'
+    JMP     finish_key_checking
+
+    check_minus_keypress:
+    CMP     byte[BX+key],0Ch
+    JNE     check_times_keypress
+    MOV     byte[keychar],'-'
+    JMP     finish_key_checking
+
+    check_times_keypress:
+    CMP     byte[BX+key],2Dh
+    JNE     check_div_keypress
+    MOV     byte[keychar],'*'
+    JMP     finish_key_checking
+
+    check_div_keypress:
+    CMP     byte[BX+key],35h
+    JNE     else_keypress
+    MOV     byte[keychar],'/'
+    JMP     finish_key_checking
+
+    else_keypress:
+    MOV     byte[keyflag],0
+
+    finish_key_checking:
+    ; Informing End-of-Interruption to the system
+	MOV 	AL,eoi
+	OUT     pictrl,AL
+	
+    ; Retrieving context
+    POP     DS
+    POP     BX
+    POP     AX
+    
+    IRET
+
 segment data
     CR                      equ  0dh 
     LF                      equ  0ah
@@ -157,6 +326,18 @@ segment data
     op_result               dw   0
     last_graphical_mode     db   0
     color                   db   15 ; Intense white
+    cs_dos                  dw   1
+    offset_dos              dw   1
+    key                     resb 8 ; Key array
+    keychar                 db   0
+    p_i                     dw   0 ; Key pointer index
+    p_t                     dw   0
+    kb_data                 equ  60h
+    kb_ctl                  equ  61h
+    pictrl                  equ  20h
+    eoi                     equ  20h
+    int9                    equ  9h
+    keyflag                 db   0
     num_buffer:             resb 5
                             db CR,LF,'$'
                 
