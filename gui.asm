@@ -203,11 +203,25 @@ draw_chars:
     MOV     AL,2dh ; Char '-'
     CALL    caracter
 
+    ; Drawing char =
+    MOV     DH,27   ; Cursor row
+    MOV     DL,09   ; Cursor column
+    CALL    cursor
+    MOV     AL,'='
+    CALL    caracter
+
     ; Drawing char 0
     MOV     DH,27   ; Cursor row
     MOV     DL,29   ; Cursor column
     CALL    cursor
     MOV     AL,30h ; Char '0'
+    CALL    caracter
+    
+    ; Drawing char =
+    MOV     DH,27   ; Cursor row
+    MOV     DL,49   ; Cursor column
+    CALL    cursor
+    MOV     AL,'='
     CALL    caracter
 
     ; Drawing char +

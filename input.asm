@@ -1,12 +1,12 @@
 global read_integer, verify_for_op_symbol
+extern mouse_input
 
 read_integer:
     MOV     DX,0000h
     PUSH    DX
 read_integer1:
     ; Reading the char
-    MOV     ah,1h
-    INT     21h
+    CALL    mouse_input
 
     ; Verifying for ending of reading
     CMP     AL,'='

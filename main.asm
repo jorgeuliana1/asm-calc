@@ -31,9 +31,6 @@ segment code
     ; Displaying the Graphical User Interface
     CALL    display_gui
 
-    ; Waiting for mouse input (DEBUG)
-    CALL    mouse_input
-
     ; Getting value1 from keyboard
     MOV     DI,value1
     CALL    read_integer
@@ -77,13 +74,16 @@ segment code
     JE      call_mul
     CMP     CX,'/'
     JE      call_div
-    JNE     quit_program
+    JNE     finish_graphical_mode
 
 finish_routine:
     ; Printing the result
     MOV     DX,[op_result]
     MOV     CX,num_buffer
     CALL    print_2_complement
+
+    ; Wait for click to confirm closing
+    CALL    mouse_input
 
 finish_graphical_mode:
     ; Finishing the graphical mode
